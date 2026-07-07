@@ -44,9 +44,12 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-char password[20];
 uint8_t rxChar;
 char star = '*';
+
+char passwordBuffer[20];
+uint8_t passwordIndex = 0;
+uint8_t passwordEntered = 0;
 
 /* USER CODE END PV */
 
@@ -110,10 +113,34 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  //(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+
+
+	if(passwordEntered == 0 ){
 	  HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY);
-	  HAL_UART_Transmit(&huart2,(uint8_t *) &star,1,HAL_MAX_DELAY);
+	  if(rxChar == '\r')
+	  {
+		  passwordBuffer[passwordIndex]='\0';
+		  UART_SendString("\r\nPassword entered\r\n");
+		  passwordEntered = 1;
+	  }
+	  else if(passwordIndex < sizeof(passwordBuffer) - 1)
+	  {
+		  passwordBuffer[passwordIndex] = rxChar;
+		  passwordIndex++;
+		  HAL_UART_Transmit(&huart2,(uint8_t *)&star,1,HAL_MAX_DELAY);
+
+	  }
+	  else
+	  {
+		  UART_SendString("\r\nPassword too long\r\n");
+		  passwordEntered = 1;
+	  }
+	}
+
+
   }
+
+
   /* USER CODE END 3 */
 }
 
@@ -272,4 +299,3 @@ void UART_SendString(const char *text)
 	//UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout
 	HAL_UART_Transmit(&huart2, (uint8_t *)text, strlen(text), HAL_MAX_DELAY);
 }
-
