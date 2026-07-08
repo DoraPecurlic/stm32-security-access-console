@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <string.h>
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,6 +53,8 @@ uint8_t passwordIndex = 0;
 
 uint8_t failedAttempts = 0;
 #define MAX_FAILED_ATTEMPTS 3
+#define LOCK_TIME_MS 30000
+#define BLINKING_SPEED_MS 50
 
 typedef enum
 {
@@ -79,6 +82,9 @@ void UART_SendString(const char *text);
 void ShowWelcomeScreen(void);
 void HandlePasswordInput(void);
 void RegisterFailedAttempt(void);
+void ResetPasswordInput(void);
+void LockSystem(void);
+
 /* USER CODE END 0 */
 
 /**
@@ -113,6 +119,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   ShowWelcomeScreen();
+  UART_SendString("Password: ");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -129,7 +136,13 @@ int main(void)
 			HandlePasswordInput();
 			break;
 
+		case LOCKED:
+			LockSystem();
+			break;
 
+		default:
+			state = WAIT_PASSWORD;
+			break;
 
 	}
 
@@ -303,15 +316,17 @@ void ShowWelcomeScreen(void)
 	UART_SendString("    STM32 Security Access Console\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("\r\n");
-	UART_SendString("Password: ");
 }
 void HandlePasswordInput(void)
 {
+
+
 	HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY);
 	if(rxChar == '\r')
 	{
 		passwordBuffer[passwordIndex] ='\0';
 		UART_SendString("\r\nPassword entered\r\n");
+
 		state = CHECK_PASSWORD;
 	}
 	else if(passwordIndex < sizeof(passwordBuffer) - 1)
@@ -325,10 +340,75 @@ void HandlePasswordInput(void)
 	else
 	{
 		UART_SendString("\r\nPassword too long\r\n");
-
+		RegisterFailedAttempt();
 
 	}
 
 
-}
+}void RegisterFailedAttempt(void)
+{
+	failedAttempts++;
 
+	if(failedAttempts < MAX_FAILED_ATTEMPTS )
+	{
+		ResetPasswordInput();
+	}
+	else
+	{
+		state = LOCKED;
+	}
+}
+void ResetPasswordInput(void)
+{
+	passwordIndex = 0;
+	memset(passwordBuffer,0,sizeof(passwordBuffer));
+
+	ShowWelcomeScreen();
+	UART_SendString("Re-enter password: ");
+
+	state = WAIT_PASSWORD;
+}
+void LockSystem(void)
+{
+	//treba prikazat lock screen da je na 30 sekundi
+	uint32_t startTime = HAL_GetTick();
+	uint32_t lastDisplayed = 999;
+	uint32_t lastBlinked = HAL_GetTick();
+
+	char message[60];
+
+	UART_SendString("\033[2J\033[H"); //reset putty-ja
+	UART_SendString("\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("   !!! STM32 Security Access LOCKED!!!\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("\r\n");
+
+	while((HAL_GetTick() - startTime) < LOCK_TIME_MS)
+	{
+		uint32_t currentTime = HAL_GetTick();
+		uint32_t elapsedTime = currentTime - startTime;
+
+		uint32_t remainingSeconds = (LOCK_TIME_MS - elapsedTime + 999)/1000;
+
+		if(remainingSeconds != lastDisplayed)
+		{
+			lastDisplayed = remainingSeconds;
+
+			snprintf(message, sizeof(message), "\r\033[KLocked: %lu seconds remaining",remainingSeconds);
+			UART_SendString(message);
+		}
+
+		//treba blinkat agresivno ledicu
+		if((currentTime - lastBlinked) >= BLINKING_SPEED_MS)
+		{
+			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+			lastBlinked = currentTime;
+		}
+	}
+
+	//reset svih brojaca vratit na nulu i ledicu ugasit
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	failedAttempts = 0;
+	ResetPasswordInput();
+}
