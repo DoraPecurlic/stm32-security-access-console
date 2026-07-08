@@ -57,6 +57,16 @@ uint8_t failedAttempts = 0;
 #define LOCK_TIME_MS 30000
 #define BLINKING_SPEED_MS 50
 
+#define BUTTON_REQUIRED_PRESS 3
+#define BUTTON_CONF_TIME_MS 10000
+#define BUTTON_DEBOUNCE_MS 200
+
+volatile uint8_t buttonPressCount = 0;
+volatile uint8_t buttonConfirmed = 0;
+volatile uint32_t lastButtonInterruptTime = 0;
+
+uint32_t buttonConfirmationStartTime = 0;
+
 typedef enum
 {
 	WAIT_PASSWORD,
@@ -86,6 +96,9 @@ void RegisterFailedAttempt(void);
 void ResetPasswordInput(void);
 void LockSystem(void);
 void CheckPassword(void);
+void StartButtonConfirmation(void);
+void HandleButtonConfirmation(void);
+void ShowAuthenticatedScreen(void);
 
 /* USER CODE END 0 */
 
@@ -141,8 +154,13 @@ int main(void)
 		case CHECK_PASSWORD:
 			CheckPassword();
 			break;
+
 		case WAIT_BUTTON_CONFIRMATION:
-			//
+			HandleButtonConfirmation();
+			break;
+
+		case AUTHENTICATED:
+			//kasnije meni skrin
 			break;
 
 		case LOCKED:
@@ -257,7 +275,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -278,7 +296,31 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	//OVO JE FUNCKIJA ZA INTERRUPT
+	if(GPIO_Pin == GPIO_PIN_13)
+	{
+		uint32_t currentTime = HAL_GetTick();
 
+		//provjerava jel pritiska tipkala bio debaounc samo ili stvaran pritisak
+		if((currentTime - lastButtonInterruptTime) >= BUTTON_DEBOUNCE_MS)
+		{
+			lastButtonInterruptTime = currentTime;
+
+			if(state == WAIT_BUTTON_CONFIRMATION)
+			{
+				buttonPressCount++;
+
+				if(buttonPressCount == BUTTON_REQUIRED_PRESS)
+				{
+					buttonConfirmed = 1;
+				}
+			}
+		}
+
+	}
+}
 /* USER CODE END 4 */
 
 /**
@@ -427,12 +469,50 @@ void CheckPassword(void)
 	{
 		UART_SendString("\r\nConfirm your identity\r\n");
 
-		state = WAIT_BUTTON_CONFIRMATION;
+		StartButtonConfirmation();
 	}
 	else
 	{
 		 UART_SendString("\r\nAccess denied\r\n");
 		 RegisterFailedAttempt();
 	}
+
+}
+void StartButtonConfirmation(void)
+{
+	buttonPressCount = 0;
+	buttonConfirmed = 0;
+	lastButtonInterruptTime = 0;
+
+	buttonConfirmationStartTime = HAL_GetTick();
+
+	state = WAIT_BUTTON_CONFIRMATION;
+
+}
+void HandleButtonConfirmation(void)
+{
+	if(buttonConfirmed == 1)
+	{
+		buttonConfirmed = 0;
+		state = AUTHENTICATED;
+		ShowAuthenticatedScreen();
+		return;
+	}
+
+	if((HAL_GetTick() - buttonConfirmationStartTime) >= BUTTON_CONF_TIME_MS)
+	{
+		UART_SendString("\r\n Confirmation failed\r\n");
+		RegisterFailedAttempt();
+	}
+
+}
+void ShowAuthenticatedScreen(void)
+{
+	UART_SendString("\033[2J\033[H");
+	UART_SendString("\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("          ACCESS AUTHORIZED\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("\r\n");
 
 }
