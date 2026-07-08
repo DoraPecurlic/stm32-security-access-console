@@ -50,6 +50,7 @@ char star = '*';
 
 char passwordBuffer[20];
 uint8_t passwordIndex = 0;
+const char password[] = "sreckovicKan";
 
 uint8_t failedAttempts = 0;
 #define MAX_FAILED_ATTEMPTS 3
@@ -84,6 +85,7 @@ void HandlePasswordInput(void);
 void RegisterFailedAttempt(void);
 void ResetPasswordInput(void);
 void LockSystem(void);
+void CheckPassword(void);
 
 /* USER CODE END 0 */
 
@@ -134,6 +136,13 @@ int main(void)
 	{
 		case WAIT_PASSWORD:
 			HandlePasswordInput();
+			break;
+
+		case CHECK_PASSWORD:
+			CheckPassword();
+			break;
+		case WAIT_BUTTON_CONFIRMATION:
+			//
 			break;
 
 		case LOCKED:
@@ -325,7 +334,6 @@ void HandlePasswordInput(void)
 	if(rxChar == '\r')
 	{
 		passwordBuffer[passwordIndex] ='\0';
-		UART_SendString("\r\nPassword entered\r\n");
 
 		state = CHECK_PASSWORD;
 	}
@@ -411,4 +419,20 @@ void LockSystem(void)
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 	failedAttempts = 0;
 	ResetPasswordInput();
+}
+void CheckPassword(void)
+{
+
+	if(strcmp(password,passwordBuffer) == 0)
+	{
+		UART_SendString("\r\nConfirm your identity\r\n");
+
+		state = WAIT_BUTTON_CONFIRMATION;
+	}
+	else
+	{
+		 UART_SendString("\r\nAccess denied\r\n");
+		 RegisterFailedAttempt();
+	}
+
 }
