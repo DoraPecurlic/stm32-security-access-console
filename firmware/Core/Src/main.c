@@ -49,8 +49,20 @@ char star = '*';
 
 char passwordBuffer[20];
 uint8_t passwordIndex = 0;
-uint8_t passwordEntered = 0;
 
+uint8_t failedAttempts = 0;
+#define MAX_FAILED_ATTEMPTS 3
+
+typedef enum
+{
+	WAIT_PASSWORD,
+	CHECK_PASSWORD,
+	WAIT_BUTTON_CONFIRMATION,
+	AUTHENTICATED,
+	LOCKED
+}State;
+
+volatile State state = WAIT_PASSWORD;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,6 +76,9 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void UART_SendString(const char *text);
+void ShowWelcomeScreen(void);
+void HandlePasswordInput(void);
+void RegisterFailedAttempt(void);
 /* USER CODE END 0 */
 
 /**
@@ -97,13 +112,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  UART_SendString("\033[2J\033[H"); //reset putty-ja
-  UART_SendString("\r\n");
-  UART_SendString("========================================\r\n");
-  UART_SendString("    STM32 Security Access Console\r\n");
-  UART_SendString("========================================\r\n");
-  UART_SendString("\r\n");
-  UART_SendString("Password: ");
+  ShowWelcomeScreen();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,27 +123,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	switch(state)
+	{
+		case WAIT_PASSWORD:
+			HandlePasswordInput();
+			break;
 
-	if(passwordEntered == 0 ){
-	  HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY);
-	  if(rxChar == '\r')
-	  {
-		  passwordBuffer[passwordIndex]='\0';
-		  UART_SendString("\r\nPassword entered\r\n");
-		  passwordEntered = 1;
-	  }
-	  else if(passwordIndex < sizeof(passwordBuffer) - 1)
-	  {
-		  passwordBuffer[passwordIndex] = rxChar;
-		  passwordIndex++;
-		  HAL_UART_Transmit(&huart2,(uint8_t *)&star,1,HAL_MAX_DELAY);
 
-	  }
-	  else
-	  {
-		  UART_SendString("\r\nPassword too long\r\n");
-		  passwordEntered = 1;
-	  }
+
 	}
 
 
@@ -299,3 +295,40 @@ void UART_SendString(const char *text)
 	//UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout
 	HAL_UART_Transmit(&huart2, (uint8_t *)text, strlen(text), HAL_MAX_DELAY);
 }
+void ShowWelcomeScreen(void)
+{
+	UART_SendString("\033[2J\033[H"); //reset putty-ja
+	UART_SendString("\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("    STM32 Security Access Console\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("\r\n");
+	UART_SendString("Password: ");
+}
+void HandlePasswordInput(void)
+{
+	HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY);
+	if(rxChar == '\r')
+	{
+		passwordBuffer[passwordIndex] ='\0';
+		UART_SendString("\r\nPassword entered\r\n");
+		state = CHECK_PASSWORD;
+	}
+	else if(passwordIndex < sizeof(passwordBuffer) - 1)
+	{
+		passwordBuffer[passwordIndex] = rxChar;
+		passwordIndex++;
+
+		HAL_UART_Transmit(&huart2,(uint8_t *)&star,1,HAL_MAX_DELAY);
+
+	}
+	else
+	{
+		UART_SendString("\r\nPassword too long\r\n");
+
+
+	}
+
+
+}
+
