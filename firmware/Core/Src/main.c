@@ -89,8 +89,9 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void UART_SendString(const char *text);
-void ShowWelcomeScreen(void);
+
+//void UART_SendString(const char *text);
+//void ShowWelcomeScreen(void);
 void HandlePasswordInput(void);
 void RegisterFailedAttempt(void);
 void ResetPasswordInput(void);
@@ -98,7 +99,7 @@ void LockSystem(void);
 void CheckPassword(void);
 void StartButtonConfirmation(void);
 void HandleButtonConfirmation(void);
-void ShowAuthenticatedScreen(void);
+//void ShowAuthenticatedScreen(void);
 
 /* USER CODE END 0 */
 
@@ -133,8 +134,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  ShowWelcomeScreen();
-  UART_SendString("Password: ");
+
+ // ShowWelcomeScreen();
+ // UART_SendString("Password: ");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -354,7 +357,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-void UART_SendString(const char *text)
+/*void UART_SendString(const char *text)
 {
 	//UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout
 	HAL_UART_Transmit(&huart2, (uint8_t *)text, strlen(text), HAL_MAX_DELAY);
@@ -367,7 +370,7 @@ void ShowWelcomeScreen(void)
 	UART_SendString("    STM32 Security Access Console\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("\r\n");
-}
+}*/
 void HandlePasswordInput(void)
 {
 
@@ -389,7 +392,7 @@ void HandlePasswordInput(void)
 	}
 	else
 	{
-		UART_SendString("\r\nPassword too long\r\n");
+		//UART_SendString("\r\nPassword too long\r\n");
 		RegisterFailedAttempt();
 
 	}
@@ -413,8 +416,8 @@ void ResetPasswordInput(void)
 	passwordIndex = 0;
 	memset(passwordBuffer,0,sizeof(passwordBuffer));
 
-	ShowWelcomeScreen();
-	UART_SendString("Re-enter password: ");
+	//ShowWelcomeScreen();
+	//UART_SendString("Re-enter password: ");
 
 	state = WAIT_PASSWORD;
 }
@@ -427,12 +430,13 @@ void LockSystem(void)
 
 	char message[60];
 
+	 /*prebaceno u showLockScreen
 	UART_SendString("\033[2J\033[H"); //reset putty-ja
 	UART_SendString("\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("   !!! STM32 Security Access LOCKED!!!\r\n");
 	UART_SendString("========================================\r\n");
-	UART_SendString("\r\n");
+	UART_SendString("\r\n");*/
 
 	while((HAL_GetTick() - startTime) < LOCK_TIME_MS)
 	{
@@ -446,7 +450,7 @@ void LockSystem(void)
 			lastDisplayed = remainingSeconds;
 
 			snprintf(message, sizeof(message), "\r\033[KLocked: %lu seconds remaining",remainingSeconds);
-			UART_SendString(message);
+			//UART_SendString(message);
 		}
 
 		//treba blinkat agresivno ledicu
@@ -467,13 +471,13 @@ void CheckPassword(void)
 
 	if(strcmp(password,passwordBuffer) == 0)
 	{
-		UART_SendString("\r\nConfirm your identity\r\n");
+		//UART_SendString("\r\nConfirm your identity\r\n");
 
 		StartButtonConfirmation();
 	}
 	else
 	{
-		 UART_SendString("\r\nAccess denied\r\n");
+		 //UART_SendString("\r\nAccess denied\r\n");
 		 RegisterFailedAttempt();
 	}
 
@@ -495,18 +499,18 @@ void HandleButtonConfirmation(void)
 	{
 		buttonConfirmed = 0;
 		state = AUTHENTICATED;
-		ShowAuthenticatedScreen();
+		//ShowAuthenticatedScreen();
 		return;
 	}
 
 	if((HAL_GetTick() - buttonConfirmationStartTime) >= BUTTON_CONF_TIME_MS)
 	{
-		UART_SendString("\r\n Confirmation failed\r\n");
+	//	UART_SendString("\r\n Confirmation failed\r\n");
 		RegisterFailedAttempt();
 	}
 
 }
-void ShowAuthenticatedScreen(void)
+/*void ShowAuthenticatedScreen(void)
 {
 	UART_SendString("\033[2J\033[H");
 	UART_SendString("\r\n");
@@ -515,4 +519,4 @@ void ShowAuthenticatedScreen(void)
 	UART_SendString("========================================\r\n");
 	UART_SendString("\r\n");
 
-}
+}*/
