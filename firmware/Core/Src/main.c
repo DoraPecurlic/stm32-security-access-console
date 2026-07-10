@@ -18,12 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "security_system.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,38 +43,7 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t rxChar;
-char star = '*';
 
-char passwordBuffer[20];
-uint8_t passwordIndex = 0;
-const char password[] = "sreckovicKan";
-
-uint8_t failedAttempts = 0;
-#define MAX_FAILED_ATTEMPTS 3
-#define LOCK_TIME_MS 30000
-#define BLINKING_SPEED_MS 50
-
-#define BUTTON_REQUIRED_PRESS 3
-#define BUTTON_CONF_TIME_MS 10000
-#define BUTTON_DEBOUNCE_MS 200
-
-volatile uint8_t buttonPressCount = 0;
-volatile uint8_t buttonConfirmed = 0;
-volatile uint32_t lastButtonInterruptTime = 0;
-
-uint32_t buttonConfirmationStartTime = 0;
-
-typedef enum
-{
-	WAIT_PASSWORD,
-	CHECK_PASSWORD,
-	WAIT_BUTTON_CONFIRMATION,
-	AUTHENTICATED,
-	LOCKED
-}State;
-
-volatile State state = WAIT_PASSWORD;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,16 +57,6 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-//void UART_SendString(const char *text);
-//void ShowWelcomeScreen(void);
-void HandlePasswordInput(void);
-void RegisterFailedAttempt(void);
-void ResetPasswordInput(void);
-void LockSystem(void);
-void CheckPassword(void);
-void StartButtonConfirmation(void);
-void HandleButtonConfirmation(void);
-//void ShowAuthenticatedScreen(void);
 
 /* USER CODE END 0 */
 
@@ -134,10 +91,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
- // ShowWelcomeScreen();
- // UART_SendString("Password: ");
-
+  SecuritySystem_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -147,40 +101,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	switch(state)
-	{
-		case WAIT_PASSWORD:
-			HandlePasswordInput();
-			break;
-
-		case CHECK_PASSWORD:
-			CheckPassword();
-			break;
-
-		case WAIT_BUTTON_CONFIRMATION:
-			HandleButtonConfirmation();
-			break;
-
-		case AUTHENTICATED:
-			//kasnije meni skrin
-			break;
-
-		case LOCKED:
-			LockSystem();
-			break;
-
-		default:
-			state = WAIT_PASSWORD;
-			break;
-
-	}
-
-
+	SecuritySystem_Update();
   }
-
-
   /* USER CODE END 3 */
+
 }
 
 /**
@@ -301,28 +225,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	//OVO JE FUNCKIJA ZA INTERRUPT
-	if(GPIO_Pin == GPIO_PIN_13)
-	{
-		uint32_t currentTime = HAL_GetTick();
-
-		//provjerava jel pritiska tipkala bio debaounc samo ili stvaran pritisak
-		if((currentTime - lastButtonInterruptTime) >= BUTTON_DEBOUNCE_MS)
-		{
-			lastButtonInterruptTime = currentTime;
-
-			if(state == WAIT_BUTTON_CONFIRMATION)
-			{
-				buttonPressCount++;
-
-				if(buttonPressCount == BUTTON_REQUIRED_PRESS)
-				{
-					buttonConfirmed = 1;
-				}
-			}
-		}
-
-	}
+	SecuritySystem_ButtonInterrupt(GPIO_Pin);
 }
 /* USER CODE END 4 */
 
@@ -357,166 +260,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-/*void UART_SendString(const char *text)
-{
-	//UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout
-	HAL_UART_Transmit(&huart2, (uint8_t *)text, strlen(text), HAL_MAX_DELAY);
-}
-void ShowWelcomeScreen(void)
-{
-	UART_SendString("\033[2J\033[H"); //reset putty-ja
-	UART_SendString("\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("    STM32 Security Access Console\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("\r\n");
-}*/
-void HandlePasswordInput(void)
-{
-
-
-	HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY);
-	if(rxChar == '\r')
-	{
-		passwordBuffer[passwordIndex] ='\0';
-
-		state = CHECK_PASSWORD;
-	}
-	else if(passwordIndex < sizeof(passwordBuffer) - 1)
-	{
-		passwordBuffer[passwordIndex] = rxChar;
-		passwordIndex++;
-
-		HAL_UART_Transmit(&huart2,(uint8_t *)&star,1,HAL_MAX_DELAY);
-
-	}
-	else
-	{
-		//UART_SendString("\r\nPassword too long\r\n");
-		RegisterFailedAttempt();
-
-	}
-
-
-}void RegisterFailedAttempt(void)
-{
-	failedAttempts++;
-
-	if(failedAttempts < MAX_FAILED_ATTEMPTS )
-	{
-		ResetPasswordInput();
-	}
-	else
-	{
-		state = LOCKED;
-	}
-}
-void ResetPasswordInput(void)
-{
-	passwordIndex = 0;
-	memset(passwordBuffer,0,sizeof(passwordBuffer));
-
-	//ShowWelcomeScreen();
-	//UART_SendString("Re-enter password: ");
-
-	state = WAIT_PASSWORD;
-}
-void LockSystem(void)
-{
-	//treba prikazat lock screen da je na 30 sekundi
-	uint32_t startTime = HAL_GetTick();
-	uint32_t lastDisplayed = 999;
-	uint32_t lastBlinked = HAL_GetTick();
-
-	char message[60];
-
-	 /*prebaceno u showLockScreen
-	UART_SendString("\033[2J\033[H"); //reset putty-ja
-	UART_SendString("\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("   !!! STM32 Security Access LOCKED!!!\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("\r\n");*/
-
-	while((HAL_GetTick() - startTime) < LOCK_TIME_MS)
-	{
-		uint32_t currentTime = HAL_GetTick();
-		uint32_t elapsedTime = currentTime - startTime;
-
-		uint32_t remainingSeconds = (LOCK_TIME_MS - elapsedTime + 999)/1000;
-
-		if(remainingSeconds != lastDisplayed)
-		{
-			lastDisplayed = remainingSeconds;
-
-			snprintf(message, sizeof(message), "\r\033[KLocked: %lu seconds remaining",remainingSeconds);
-			//UART_SendString(message);
-		}
-
-		//treba blinkat agresivno ledicu
-		if((currentTime - lastBlinked) >= BLINKING_SPEED_MS)
-		{
-			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-			lastBlinked = currentTime;
-		}
-	}
-
-	//reset svih brojaca vratit na nulu i ledicu ugasit
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	failedAttempts = 0;
-	ResetPasswordInput();
-}
-void CheckPassword(void)
-{
-
-	if(strcmp(password,passwordBuffer) == 0)
-	{
-		//UART_SendString("\r\nConfirm your identity\r\n");
-
-		StartButtonConfirmation();
-	}
-	else
-	{
-		 //UART_SendString("\r\nAccess denied\r\n");
-		 RegisterFailedAttempt();
-	}
-
-}
-void StartButtonConfirmation(void)
-{
-	buttonPressCount = 0;
-	buttonConfirmed = 0;
-	lastButtonInterruptTime = 0;
-
-	buttonConfirmationStartTime = HAL_GetTick();
-
-	state = WAIT_BUTTON_CONFIRMATION;
-
-}
-void HandleButtonConfirmation(void)
-{
-	if(buttonConfirmed == 1)
-	{
-		buttonConfirmed = 0;
-		state = AUTHENTICATED;
-		//ShowAuthenticatedScreen();
-		return;
-	}
-
-	if((HAL_GetTick() - buttonConfirmationStartTime) >= BUTTON_CONF_TIME_MS)
-	{
-	//	UART_SendString("\r\n Confirmation failed\r\n");
-		RegisterFailedAttempt();
-	}
-
-}
-/*void ShowAuthenticatedScreen(void)
-{
-	UART_SendString("\033[2J\033[H");
-	UART_SendString("\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("          ACCESS AUTHORIZED\r\n");
-	UART_SendString("========================================\r\n");
-	UART_SendString("\r\n");
-
-}*/

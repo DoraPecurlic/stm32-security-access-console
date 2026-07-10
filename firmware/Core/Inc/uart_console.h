@@ -8,8 +8,9 @@
 #ifndef INC_UART_CONSOLE_H_
 #define INC_UART_CONSOLE_H_
 
+
 void UART_SendString(const char *text);
-void UART_ClearScreen(void);
+void ClearScreen(void);
 void ShowWelcomeScreen(void);
 void ShowLockScreen(void);
 void ShowAuthenticatedScreen(void);

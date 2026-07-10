@@ -14,13 +14,10 @@ void UART_SendString(const char *text)
 {
 	HAL_UART_Transmit(&huart2, (uint8_t *)text, strlen(text), HAL_MAX_DELAY);
 }
-void UART_ClearScreen(void)
-{
-	UART_SendString("\033[2J\033[H"); //reset putty-ja
-}
+
 void ShowWelcomeScreen(void)
 {
-	UART_ClearScreen();
+	ClearScreen();
 	UART_SendString("\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("    STM32 Security Access Console\r\n");
@@ -29,7 +26,7 @@ void ShowWelcomeScreen(void)
 }
 void ShowLockScreen(void)
 {
-	UART_ClearScreen();
+	ClearScreen();
 	UART_SendString("\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("   !!! STM32 Security Access LOCKED!!!\r\n");
@@ -38,10 +35,15 @@ void ShowLockScreen(void)
 }
 void ShowAuthenticatedScreen(void)
 {
-	UART_ClearScreen();
+	ClearScreen();
 	UART_SendString("\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("          ACCESS AUTHORIZED\r\n");
 	UART_SendString("========================================\r\n");
 	UART_SendString("\r\n");
+}
+
+void ClearScreen(void)
+{
+	UART_SendString("\033[2J\033[H"); //reset putty-ja
 }
