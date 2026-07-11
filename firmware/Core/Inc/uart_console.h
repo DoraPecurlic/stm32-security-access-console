@@ -11,8 +11,6 @@
 
 void UART_SendString(const char *text);
 void ClearScreen(void);
-void ShowWelcomeScreen(void);
-void ShowLockScreen(void);
-void ShowAuthenticatedScreen(void);
+void UART_ShowPrompt(void);
 
 #endif /* INC_UART_CONSOLE_H_ */

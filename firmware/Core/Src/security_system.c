@@ -1,9 +1,12 @@
 #include "security_system.h"
 #include "uart_console.h"
+#include "ui_screens.h"
+#include "command_handler.h"
 #include "main.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <ui_screens.h>
 
 extern UART_HandleTypeDef huart2;
 
@@ -16,6 +19,7 @@ extern UART_HandleTypeDef huart2;
 #define BUTTON_DEBOUNCE_MS 200
 
 #define PASSWORD_BUFFER_SIZE   20
+
 
 typedef enum
 {
@@ -89,16 +93,15 @@ void SecuritySystem_Update(void)
 	            break;
 
 	        case AUTHENTICATED:
-	            /*
-	             * Ovdje će kasnije doći command handler:
-	             * help
-	             * status
-	             * led on
-	             * led off
-	             * blink
-	             * lock
-	             */
-	            break;
+	        {
+	        	CommandResult commandResult = CommandHandler_Update();
+	        	if (commandResult == COMMAND_RESULT_LOCK)
+	        	{
+	        	    ResetPasswordInput();
+	        	}
+
+	        	break;
+	        }
 
 	        case LOCKED:
 	            LockSystem();
@@ -268,9 +271,12 @@ static void HandleButtonConfirmation(void)
     if (buttonConfirmed != 0)
     {
         buttonConfirmed = 0;
+
+
+        CommandHandler_Init();
+
         state = AUTHENTICATED;
 
-        ShowAuthenticatedScreen();
 
         return;
     }
