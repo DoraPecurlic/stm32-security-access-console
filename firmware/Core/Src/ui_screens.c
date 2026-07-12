@@ -29,7 +29,7 @@ void ShowLockScreen(void)
 
 void UI_ShowMainMenuScreen(void)
 {
-
+	ClearScreen();
 	ShowWelcomeScreen();
 
     UART_SendString("Available commands:\r\n\r\n");
@@ -49,29 +49,30 @@ void UI_ShowHelpScreen(void)
 
     UART_SendString("\r\n");
     UART_SendString("========================================\r\n");
-    UART_SendString("                HELP\r\n");
+    UART_SendString("                HELP - User Manual\r\n");
     UART_SendString("========================================\r\n");
     UART_SendString("\r\n");
 
-    UART_SendString("This console controls a simple STM32 security system.\r\n");
-    UART_SendString("\r\n");
     UART_SendString("Commands:\r\n");
     UART_SendString("  help      - Opens this help screen\r\n");
     UART_SendString("\r\n");
     UART_SendString("  status    - Shows overall system status \r\n");
     UART_SendString("\r\n");
-    UART_SendString("  alarm     - Alarm control unit; User can turn on the alarm when needed or turn it of.\r\n");
+    UART_SendString("  alarm     - Alarm control unit\r\n");
+    UART_SendString("              User can turn on or off the alarm when needed\r\n");
     UART_SendString("              When alarm is triggered, LED is blinking fast\r\n");
     UART_SendString("              When alarm is not triggered, LED is turned off\r\n");
     UART_SendString("\r\n");
-    UART_SendString("  door      - Door control unit; User can open or close the door\r\n");
+    UART_SendString("  door      - Door control unit\r\n");
+    UART_SendString("            - User can open or close the door\r\n");
     UART_SendString("              When door is opened, LED is turned on\r\n");
     UART_SendString("              When door is closed, LED is off\r\n");
     UART_SendString("\r\n");
-    UART_SendString("  lock      - Locks system; User is logged out \r\n");
+    UART_SendString("  lock      - Locks system\r\n");
+    UART_SendString("            - User will be logged out\r\n");
     UART_SendString("\r\n");
 
-    UART_SendString("Type 'back' to return to main menu.\r\n");
+    UART_SendString("Type 'back' to return to main menu\r\n");
 
     UART_ShowPrompt();
 }

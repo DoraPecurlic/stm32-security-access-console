@@ -79,7 +79,7 @@ static void ShowCurrentScreen(void)
 			break;
 
 		case HELP_SCREEN:
-			//not implemented yet
+			UI_ShowHelpScreen();
 			break;
 
 		case STATUS_SCREEN:
@@ -143,10 +143,12 @@ static CommandResult HandleCommand(void)
 }
 static void AddCharToBuffer(uint8_t rxChar)
 {
-	if(commandBufferIndex > (COMMAND_BUFFER_SIZE -1U))
+	if(commandBufferIndex >= (COMMAND_BUFFER_SIZE - 1U))
 	{
-		UART_SendString("\r\nCommand too long\r\n");
+		UART_SendString("\r\nPlease enter valid command\r\n");
 		ClearCommandBuffer();
+		UART_ShowPrompt();
+		return;
 
 	}
 
@@ -163,5 +165,41 @@ static void ClearCommandBuffer(void)
 static CommandResult ExecuteCommand(void)
 {
 	//to be implemented :)
+	if(strcmp(commandBuffer, "help") == 0)
+	{
+		screenRefresh = 1;
+		currentScreen = HELP_SCREEN;
+		return COMMAND_RESULT_NONE;
+	}
+	if(strcmp(commandBuffer, "back") == 0)
+	{
+		screenRefresh = 1;
+		currentScreen = MAIN_MENU_SCREEN;
+		return COMMAND_RESULT_NONE;
+	}
+
+	if(strcmp(commandBuffer, "status") == 0)
+	{
+		screenRefresh = 1;
+		currentScreen = STATUS_SCREEN;
+		return COMMAND_RESULT_NONE;
+	}
+	/*
+	if(strcmp() == 0)
+	{
+
+	}
+
+	if(strcmp() == 0)
+	{
+
+	}
+
+	if(strcmp() == 0)
+	{
+
+	}*/
+
+
 	return COMMAND_RESULT_NONE;
 }

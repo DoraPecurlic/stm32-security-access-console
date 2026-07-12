@@ -17,7 +17,7 @@ void UART_SendString(const char *text)
 
 void ClearScreen(void)
 {
-	UART_SendString("\033[2J\033[H"); //reset putty-ja
+	UART_SendString("\033[2J\033[3J\033[H"); //reset putty-ja
 }
 
 void UART_ShowPrompt(void)
