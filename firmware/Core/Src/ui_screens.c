@@ -45,7 +45,7 @@ void UI_ShowMainMenuScreen(void)
 
 void UI_ShowHelpScreen(void)
 {
-    UART_ClearScreen();
+	ClearScreen();
 
     UART_SendString("\r\n");
     UART_SendString("========================================\r\n");
@@ -73,5 +73,5 @@ void UI_ShowHelpScreen(void)
 
     UART_SendString("Type 'back' to return to main menu.\r\n");
 
-    ShowPrompt();
+    UART_ShowPrompt();
 }

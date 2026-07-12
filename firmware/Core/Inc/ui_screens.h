@@ -13,5 +13,6 @@ void ShowLockScreen(void);
 
 
 void UI_ShowMainMenuScreen(void);
+void UI_ShowHelpScreen(void);
 
 #endif /* INC_UI_SCREENS_H_ */
