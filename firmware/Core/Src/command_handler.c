@@ -18,6 +18,7 @@
 extern UART_HandleTypeDef huart2;
 
 #define COMMAND_BUFFER_SIZE 20U
+#define ALARM_BLINK_INTERVAL_MS 500U
 
 typedef enum
 {
@@ -31,6 +32,7 @@ typedef enum
 //Private variables
 static CurrentScreen currentScreen = MAIN_MENU_SCREEN;
 static uint8_t screenRefresh = 0;
+static uint32_t lastAlarmBlinkTime = 0U;
 
 static char commandBuffer[COMMAND_BUFFER_SIZE];
 static uint8_t commandBufferIndex = 0;
@@ -50,7 +52,11 @@ static CommandResult ExecuteCommand(void);
 static void HandleDoorControlCommand(void);
 static void SetDoorState(uint8_t opened);
 
+static void HandleAlarmControlCommand(void);
+static void SetAlarmState(uint8_t alarmOn);
+static void UpdateAlarmLed(void);
 
+static void ReEnterCommand(void);
 
 
 void CommandHandler_Init(void)
@@ -67,6 +73,7 @@ void CommandHandler_Init(void)
 CommandResult CommandHandler_Update(void)
 {
 	//salje securiti sistemu jel korisnik reko da locka ili nije nista njemu reko
+	UpdateAlarmLed();
 
 	if(screenRefresh != 0 )
 	{
@@ -94,7 +101,7 @@ static void ShowCurrentScreen(void)
 			break;
 
 		case ALARM_CONTROL_SCREEN:
-			//not implemented yet
+			UI_ShowAlarmControlScreen(isAlarmOn);
 			break;
 
 		case DOOR_CONTROL_SCREEN:
@@ -136,6 +143,7 @@ static CommandResult HandleRecievedCharacter(uint8_t rxChar)
 
 	return COMMAND_RESULT_NONE;
 }
+
 static CommandResult HandleCommand(void)
 {
 	//ona treba dodat novi red na terminalu
@@ -148,13 +156,12 @@ static CommandResult HandleCommand(void)
 	ClearCommandBuffer();
 	return result;
 }
+
 static void AddCharToBuffer(uint8_t rxChar)
 {
 	if(commandBufferIndex >= (COMMAND_BUFFER_SIZE - 1U))
 	{
-		UART_SendString("\r\nPlease enter valid command\r\n");
-		ClearCommandBuffer();
-		UART_ShowPrompt();
+		ReEnterCommand();
 		return;
 
 	}
@@ -164,11 +171,13 @@ static void AddCharToBuffer(uint8_t rxChar)
 
 	HAL_UART_Transmit(&huart2,&rxChar,1,HAL_MAX_DELAY);
 }
+
 static void ClearCommandBuffer(void)
 {
 	commandBufferIndex = 0;
 	memset(commandBuffer,0,sizeof(commandBuffer));
 }
+
 static CommandResult ExecuteCommand(void)
 {
 	//to be implemented :)
@@ -199,12 +208,15 @@ static CommandResult ExecuteCommand(void)
 
 		return COMMAND_RESULT_NONE;
 	}
-	/*
-	if(strcmp() == 0)
+
+	if(strcmp(commandBuffer, "alarm") == 0)
 	{
+		screenRefresh = 1;
+		currentScreen = ALARM_CONTROL_SCREEN;
 
+		return COMMAND_RESULT_NONE;
 	}
-
+	/*
 	if(strcmp() == 0)
 	{
 
@@ -217,8 +229,18 @@ static CommandResult ExecuteCommand(void)
 	      return COMMAND_RESULT_NONE;
 	 }
 
+	 if(currentScreen == ALARM_CONTROL_SCREEN)
+	 {
+	 	     HandleAlarmControlCommand();
+
+	 	     return COMMAND_RESULT_NONE;
+	 }
+
+	 ReEnterCommand();
+
 	return COMMAND_RESULT_NONE;
 }
+
 static void HandleDoorControlCommand(void)
 {
 	if(strcmp(commandBuffer, "open") == 0)
@@ -237,10 +259,10 @@ static void HandleDoorControlCommand(void)
 		return;
 	}
 
-	UART_SendString("\r\nPlease enter valid command\r\n");
-	UART_ShowPrompt();
+	ReEnterCommand();
 
 }
+
 static void SetDoorState(uint8_t opened)
 {
 	isDoorOpened = opened;
@@ -253,4 +275,63 @@ static void SetDoorState(uint8_t opened)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 	}
+}
+
+static void HandleAlarmControlCommand(void)
+{
+	if(strcmp(commandBuffer, "on") == 0)
+		{
+		    SetAlarmState(1U);
+			screenRefresh = 1;
+
+			return;
+		}
+
+		if(strcmp(commandBuffer, "off") == 0)
+		{
+			SetAlarmState(0U);
+			screenRefresh = 1;
+
+			return;
+		}
+
+		ReEnterCommand();
+}
+
+static void SetAlarmState(uint8_t alarmOn)
+{
+	isAlarmOn = alarmOn;
+
+	if(isAlarmOn != 0U)
+	{
+		HAL_GPIO_WritePin(ALARM_LED_GPIO_Port, ALARM_LED_Pin, GPIO_PIN_SET);
+	}
+	else
+	{
+		HAL_GPIO_WritePin(ALARM_LED_GPIO_Port, ALARM_LED_Pin, GPIO_PIN_RESET);
+	}
+}
+
+static void UpdateAlarmLed(void)
+{
+	uint32_t currentTime = HAL_GetTick();
+
+	if(isAlarmOn == 0U)
+	{
+		return;
+	}
+
+	if((currentTime - lastAlarmBlinkTime ) >= ALARM_BLINK_INTERVAL_MS)
+	{
+		lastAlarmBlinkTime = currentTime;
+
+		HAL_GPIO_TogglePin(ALARM_LED_GPIO_Port, ALARM_LED_Pin);
+	}
+}
+
+static void ReEnterCommand(void)
+{
+	UART_SendString("\r\nPlease enter valid command\r\n");
+	ClearCommandBuffer();
+	UART_ShowPrompt();
 }
