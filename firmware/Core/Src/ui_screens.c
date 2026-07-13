@@ -137,3 +137,33 @@ void UI_ShowDoorControlScreen(uint8_t isDoorOpened)
 
     UART_ShowPrompt();
 }
+
+void UI_ShowAlarmControlScreen(uint8_t isAlarmOn)
+{
+	ClearScreen();
+
+	UART_SendString("\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("             ALARM CONTROL\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("\r\n");
+
+	if(isAlarmOn != 0U)
+	{
+	   UART_SendString("Current alarm state: ON\r\n");
+	}
+	else
+	{
+	   UART_SendString("Current alarm state: OFF\r\n");
+	}
+
+	UART_SendString("\r\n");
+	UART_SendString("Available commands:\r\n");
+	UART_SendString("  ON  - Turn Alarm on\r\n");
+	UART_SendString("  OFF - Turn alarm off\r\n");
+	UART_SendString("  back  - Return to main menu\r\n");
+	UART_SendString("\r\n");
+
+	UART_ShowPrompt();
+
+}

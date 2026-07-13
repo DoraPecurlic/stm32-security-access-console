@@ -60,6 +60,8 @@ void CommandHandler_Init(void)
 
 	screenRefresh = 1;
 
+	SetDoorState(0U);
+
 }
 
 CommandResult CommandHandler_Update(void)

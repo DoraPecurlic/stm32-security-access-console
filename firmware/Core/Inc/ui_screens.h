@@ -18,5 +18,6 @@ void UI_ShowMainMenuScreen(void);
 void UI_ShowHelpScreen(void);
 void UI_ShowStatusScreen(uint8_t isDoorOpened, uint8_t isAlarmOn);
 void UI_ShowDoorControlScreen(uint8_t isDoorOpened);
+void UI_ShowAlarmControlScreen(uint8_t isAlarmOn);
 
 #endif /* INC_UI_SCREENS_H_ */
