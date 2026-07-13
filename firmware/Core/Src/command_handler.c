@@ -8,6 +8,7 @@
 #include "command_handler.h"
 #include "ui_screens.h"
 #include "uart_console.h"
+#include "main.h"
 
 #include <stdint.h>
 #include "stm32f4xx_hal.h"
@@ -45,6 +46,9 @@ static CommandResult HandleCommand();
 static void AddCharToBuffer(uint8_t rxChar);
 static void ClearCommandBuffer(void);
 static CommandResult ExecuteCommand(void);
+
+static void HandleDoorControlCommand(void);
+static void SetDoorState(uint8_t opened);
 
 
 
@@ -92,7 +96,7 @@ static void ShowCurrentScreen(void)
 			break;
 
 		case DOOR_CONTROL_SCREEN:
-			//not implemented yet
+			UI_ShowDoorControlScreen(isDoorOpened);
 			break;
 
 		default:
@@ -108,7 +112,7 @@ static CommandResult HandleInput(void)
 	uint8_t rxChar;
 
 
-	if(HAL_UART_Receive(&huart2,&rxChar,1,HAL_MAX_DELAY) == HAL_OK)
+	if(HAL_UART_Receive(&huart2,&rxChar,1,10) == HAL_OK)
 	{
 		HandleRecievedCharacter(rxChar);
 	}
@@ -185,12 +189,15 @@ static CommandResult ExecuteCommand(void)
 		currentScreen = STATUS_SCREEN;
 		return COMMAND_RESULT_NONE;
 	}
-	/*
-	if(strcmp() == 0)
+
+	if(strcmp(commandBuffer, "door") == 0)
 	{
+		screenRefresh = 1;
+		currentScreen = DOOR_CONTROL_SCREEN;
 
+		return COMMAND_RESULT_NONE;
 	}
-
+	/*
 	if(strcmp() == 0)
 	{
 
@@ -201,7 +208,47 @@ static CommandResult ExecuteCommand(void)
 
 	}*/
 
+	 if(currentScreen == DOOR_CONTROL_SCREEN)
+	 {
+	      HandleDoorControlCommand();
+
+	      return COMMAND_RESULT_NONE;
+	 }
 
 	return COMMAND_RESULT_NONE;
 }
+static void HandleDoorControlCommand(void)
+{
+	if(strcmp(commandBuffer, "open") == 0)
+	{
+		SetDoorState(1U);
+		screenRefresh = 1;
 
+		return;
+	}
+
+	if(strcmp(commandBuffer, "close") == 0)
+	{
+		SetDoorState(0U);
+		screenRefresh = 1;
+
+		return;
+	}
+
+	UART_SendString("\r\nPlease enter valid command\r\n");
+	UART_ShowPrompt();
+
+}
+static void SetDoorState(uint8_t opened)
+{
+	isDoorOpened = opened;
+
+	if(isDoorOpened != 0U)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	}
+	else
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	}
+}

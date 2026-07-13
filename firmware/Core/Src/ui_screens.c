@@ -109,3 +109,31 @@ void UI_ShowStatusScreen(uint8_t isDoorOpened, uint8_t isAlarmOn)
 	UART_SendString("Type 'back' to return.\r\n");
 	UART_SendString("> ");
 }
+void UI_ShowDoorControlScreen(uint8_t isDoorOpened)
+{
+    ClearScreen();
+
+    UART_SendString("\r\n");
+    UART_SendString("========================================\r\n");
+    UART_SendString("             DOOR CONTROL\r\n");
+    UART_SendString("========================================\r\n");
+    UART_SendString("\r\n");
+
+    if(isDoorOpened != 0U)
+    {
+        UART_SendString("Current door state: OPENED\r\n");
+    }
+    else
+    {
+        UART_SendString("Current door state: CLOSED\r\n");
+    }
+
+    UART_SendString("\r\n");
+    UART_SendString("Available commands:\r\n");
+    UART_SendString("  open  - Open the door\r\n");
+    UART_SendString("  close - Close the door\r\n");
+    UART_SendString("  back  - Return to main menu\r\n");
+    UART_SendString("\r\n");
+
+    UART_ShowPrompt();
+}
