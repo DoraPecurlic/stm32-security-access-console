@@ -34,7 +34,8 @@ static uint8_t screenRefresh = 0;
 static char commandBuffer[COMMAND_BUFFER_SIZE];
 static uint8_t commandBufferIndex = 0;
 
-
+static uint8_t isDoorOpened = 0U;
+static uint8_t isAlarmOn = 0U;
 
 //Private functions
 static void ShowCurrentScreen(void);
@@ -83,7 +84,7 @@ static void ShowCurrentScreen(void)
 			break;
 
 		case STATUS_SCREEN:
-			//not implemented yet
+			UI_ShowStatusScreen(isDoorOpened, isAlarmOn);
 			break;
 
 		case ALARM_CONTROL_SCREEN:
@@ -203,3 +204,4 @@ static CommandResult ExecuteCommand(void)
 
 	return COMMAND_RESULT_NONE;
 }
+

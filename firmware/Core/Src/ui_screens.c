@@ -6,6 +6,7 @@
  */
 
 #include "uart_console.h"
+#include <stdint.h>
 
 void ShowWelcomeScreen(void)
 {
@@ -60,13 +61,13 @@ void UI_ShowHelpScreen(void)
     UART_SendString("\r\n");
     UART_SendString("  alarm     - Alarm control unit\r\n");
     UART_SendString("              User can turn on or off the alarm when needed\r\n");
-    UART_SendString("              When alarm is triggered, LED is blinking fast\r\n");
-    UART_SendString("              When alarm is not triggered, LED is turned off\r\n");
+    UART_SendString("              When alarm is triggered, external LED is blinking fast\r\n");
+    UART_SendString("              When alarm is not triggered, external LED is turned off\r\n");
     UART_SendString("\r\n");
     UART_SendString("  door      - Door control unit\r\n");
     UART_SendString("            - User can open or close the door\r\n");
-    UART_SendString("              When door is opened, LED is turned on\r\n");
-    UART_SendString("              When door is closed, LED is off\r\n");
+    UART_SendString("              When door is opened, user LED is turned on\r\n");
+    UART_SendString("              When door is closed, user LED is off\r\n");
     UART_SendString("\r\n");
     UART_SendString("  lock      - Locks system\r\n");
     UART_SendString("            - User will be logged out\r\n");
@@ -76,7 +77,7 @@ void UI_ShowHelpScreen(void)
 
     UART_ShowPrompt();
 }
-void UI_ShowStatusScreen(void)
+void UI_ShowStatusScreen(uint8_t isDoorOpened, uint8_t isAlarmOn)
 {
 	ClearScreen();
 
@@ -86,4 +87,25 @@ void UI_ShowStatusScreen(void)
 	UART_SendString("========================================\r\n");
 	UART_SendString("\r\n");
 
+	if(isDoorOpened)
+	{
+		UART_SendString("Door:   OPENED\r\n");
+	}
+	else
+	{
+		UART_SendString("Door:   CLOSED\r\n");
+	}
+
+	if(isAlarmOn)
+	{
+			UART_SendString("Alarm:   ON\r\n");
+	}
+	else
+	{
+			UART_SendString("Alarm:   OFF\r\n");
+	}
+
+	UART_SendString("\r\n");
+	UART_SendString("Type 'back' to return.\r\n");
+	UART_SendString("> ");
 }

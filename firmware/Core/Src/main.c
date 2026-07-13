@@ -92,11 +92,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   SecuritySystem_Init();
-  HAL_GPIO_WritePin(
-  	ALARM_LED_GPIO_Port,
-  	ALARM_LED_Pin,
-  	GPIO_PIN_SET
-  );
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
