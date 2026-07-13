@@ -49,7 +49,7 @@ void UI_ShowHelpScreen(void)
 
     UART_SendString("\r\n");
     UART_SendString("========================================\r\n");
-    UART_SendString("                HELP - User Manual\r\n");
+    UART_SendString("          HELP - User Manual\r\n");
     UART_SendString("========================================\r\n");
     UART_SendString("\r\n");
 
@@ -75,4 +75,15 @@ void UI_ShowHelpScreen(void)
     UART_SendString("Type 'back' to return to main menu\r\n");
 
     UART_ShowPrompt();
+}
+void UI_ShowStatusScreen(void)
+{
+	ClearScreen();
+
+	UART_SendString("\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("          CURRENT SYSTEM STATUS\r\n");
+	UART_SendString("========================================\r\n");
+	UART_SendString("\r\n");
+
 }
