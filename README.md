@@ -1,8 +1,13 @@
 # STM32 Security Access Console
 
-A mini embedded project built on an STM32 Nucleo board that simulates a secure command-line authentication system using UART communication.
+![STM32](https://img.shields.io/badge/MCU-STM32F401RE-blue)
+![Language](https://img.shields.io/badge/Language-C-success)
+![Framework](https://img.shields.io/badge/Framework-STM32%20HAL-blueviolet)
+![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
 
-The project demonstrates embedded software development concepts such as state machines, UART communication, GPIO control, authentication logic, timing, and user interaction.
+A mini embedded security system developed on the STM32 Nucleo-F401RE board.
+
+The system provides password authentication through a UART command-line interface, button-based two-factor authentication, system lockout protection, virtual door control, and alarm control using onboard and external LEDs.
 
 ---
 
@@ -10,138 +15,173 @@ The project demonstrates embedded software development concepts such as state ma
 
 ### Authentication
 
-- Password-based authentication over UART
-- Maximum of 3 failed login attempts
-- Automatic 30-second system lock after 3 incorrect passwords
-- LED alarm indication during lock state
+- Password-based authentication through UART
+- Password characters are hidden during input
+- Maximum of three failed login attempts
+- Automatic 30-second lockout after three incorrect passwords
+- Visual LED indication while the system is locked
 - Two-factor authentication using the onboard user button
-- User must press the button 3 times within 10 seconds
+- The user must press the button three times within 10 seconds
+- Automatic return to password authentication if verification fails
 
----
+### Command Console
 
-## Command Console
+After successful authentication, the user gains access to an interactive command console.
 
-After successful authentication, the following commands become available:
+The console is divided into multiple screens:
 
-| Command | Description |
-|---------|-------------|
-| `help` | Display available commands |
-| `status` | Show current device status |
-| `led on` | Turn LED on |
-| `led off` | Turn LED off |
-| `blink` | Start LED blinking |
-| `lock` | Logout and return to login screen |
+- Main menu
+- Help screen
+- Status screen
+- Door control screen
+- Alarm control screen
 
----
+### Door Control
 
-## Device Status
+The system simulates a controllable security door.
 
-The `status` command displays information such as:
+- Open and close the virtual door through UART commands
+- Display the current door state
+- Use the onboard green LED to represent whether the door is open
 
-- Authentication state
-- LED state
-- Failed login attempts
-- System uptime
-- Current operating mode
+### Alarm Control
+
+- Enable or disable the alarm through UART commands
+- Display the current alarm state
+- Use an external red LED as the alarm indicator
+- Blink the alarm LED without blocking the rest of the program
 
 ---
 
 ## Hardware
 
-- STM32 Nucleo-F401RE
-- UART (Virtual COM Port)
-- On-board User LED
-- On-board User Button
+### Components
+
+- STM32 Nucleo-F401RE development board
+- External red LED
+- Current-limiting resistor (330 Ohm)
+- Breadboard
+- Jumper wires
+- USB cable
+- Computer running a serial terminal
+
+### Pin Configuration
+
+| Component | STM32 pin | Function |
+|---|---|---|
+| Onboard green LED LD2 | PA5 | Virtual door state |
+| External red LED | PB5 | Alarm indication |
+| Onboard user button B1 | PC13 | Two-factor authentication |
+| USART2 TX | PA2 | UART transmission |
+| USART2 RX | PA3 | UART reception |
+
+The external LED must be connected in series with a current-limiting resistor.
+
+---
+
+## Hardware Setup
+
+
 
 ---
 
 ## Software
 
 - STM32CubeIDE
-- STM32 HAL Drivers
-- Git
-- GitHub
+- STM32CubeMX
+- STM32 HAL drivers
+- PuTTY 
+
+### UART Configuration
+
+| Setting | Value |
+|---|---|
+| UART peripheral | USART2 |
+| Baud rate | 115200 |
+| Data bits | 8 |
+| Stop bits | 1 |
+| Parity | None |
+| Flow control | None |
+
+---
+
+## Software Architecture
+
+The application is divided into separate modules to keep hardware control, interface logic, and system behavior organized.
+
+| Module | Responsibility |
+|---|---|
+| `main.c` | Hardware initialization and main application loop |
+| `security_system.c` | Authentication and main security state machine |
+| `command_handler.c` | UART command processing and console navigation |
+| `ui_screens.c` | Terminal screen and message output |
+| `uart_console.c` | UART helper functions |
+
+The system uses state machines to manage authentication and command-console behavior.
 
 ---
 
 ## Project Structure
 
-```
-stm32-security-access-console
-│
-├── Core/
-├── Drivers/
-├── docs/
-│   └── user_manual.md
-├── README.md
+```text
+stm32-security-access-console/
+├── firmware/
+│   ├── Core/
+│   │   ├── Inc/
+│   │   │   ├── command_handler.h
+│   │   │   ├── security_system.h
+│   │   │   ├── uart_console.h
+│   │   │   ├── ui_screens.h
+│   │   │   └── main.h
+│   │   └── Src/
+│   │       ├── command_handler.c
+│   │       ├── security_system.c
+│   │       ├── uart_console.c
+│   │       ├── ui_screens.c
+│   │       └── main.c
+│   ├── Drivers/
 ├── .gitignore
-└── STM32_Security_Access_Console.ioc
+└── README.md
 ```
 
 ---
 
-## Authentication Flow
+## Running the Project
 
-```
-Power On
-    │
-    ▼
-Password Prompt
-    │
-    ├── Wrong Password
-    │       │
-    │       ▼
-    │  Failed Attempts
-    │
-    │       └── 3 Attempts
-    │               │
-    │               ▼
-    │         System Locked
-    │         (30 seconds)
-    │
-    ▼
-Correct Password
-    │
-    ▼
-Press Button 3 Times
-(within 10 seconds)
-    │
-    ├── Success
-    │       │
-    │       ▼
-    │ Command Console
-    │
-    └── Failure
-            │
-            ▼
-      System Locked
-```
+1. Clone the repository.
+2. Open the project in STM32CubeIDE.
+3. Connect the STM32 Nucleo-F401RE board through USB.
+4. Build and flash the project.
+5. Open PuTTY.
+6. Select the board's virtual COM port.
+7. Configure the serial connection to `115200 8N1`.
+8. Follow the instructions displayed in the terminal.
 
 ---
 
-## Learning Objectives
+## Console Preview
+
+
+---
+
+## Learning Outcomes
 
 This project was created to practice:
 
 - UART communication
-- GPIO configuration
+- GPIO input and output
+- External interrupt handling
 - State machine implementation
 - Embedded software architecture
-- Command parser implementation
-- Software timers
-- User authentication logic
-- Version control using Git
+- Command parsing
+- Non-blocking software timers
+- Authentication logic
+- Modular C programming
+- Git and GitHub workflow
+- Connecting external components to an STM32 board
 
 ---
 
-
-
 ## Author
 
-Developed by Dora Pečurlić 
-
-![STM32](https://img.shields.io/badge/MCU-STM32-blue)
-
-![Language](https://img.shields.io/badge/C-HAL-success)
-
-![Status](https://img.shields.io/badge/Status-In%20Development-orange)
+Developed by Dora Pečurlić.
