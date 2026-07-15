@@ -174,10 +174,8 @@ This project was created to practice:
 - State machine implementation
 - Embedded software architecture
 - Command parsing
-- Non-blocking software timers
 - Authentication logic
 - Modular C programming
-- Git and GitHub workflow
 - Connecting external components to an STM32 board
 
 ---
