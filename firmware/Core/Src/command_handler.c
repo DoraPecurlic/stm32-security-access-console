@@ -29,7 +29,7 @@ typedef enum
 	DOOR_CONTROL_SCREEN
 }CurrentScreen;
 
-//Private variables
+/* private variables */
 static CurrentScreen currentScreen = MAIN_MENU_SCREEN;
 static uint8_t screenRefresh = 0;
 static uint32_t lastAlarmBlinkTime = 0U;
@@ -40,7 +40,7 @@ static uint8_t commandBufferIndex = 0;
 static uint8_t isDoorOpened = 0U;
 static uint8_t isAlarmOn = 0U;
 
-//Private functions
+/* private functions */
 static void ShowCurrentScreen(void);
 static CommandResult HandleInput(void);
 static CommandResult HandleRecievedCharacter(uint8_t rxChar);
@@ -61,19 +61,19 @@ static void ReEnterCommand(void);
 
 void CommandHandler_Init(void)
 {
-	//implementation on init function for command hander -  first screen, buffers, counters, flags in  eneteriing sstate
+
 	currentScreen = MAIN_MENU_SCREEN;
 
 	screenRefresh = 1;
 
-//	SetDoorState(0U);
-	//SetAlarmState(0U);
+	SetDoorState(0U);
+	SetAlarmState(0U);
 
 }
 
 CommandResult CommandHandler_Update(void)
 {
-	//salje securiti sistemu jel korisnik reko da locka ili nije nista njemu reko
+
 	UpdateAlarmLed();
 
 	if(screenRefresh != 0 )
@@ -86,7 +86,7 @@ CommandResult CommandHandler_Update(void)
 
 static void ShowCurrentScreen(void)
 {
-	/* function that handels when to show which screen - main handler/state machine for command handler */
+
 	switch (currentScreen)
 	{
 		case MAIN_MENU_SCREEN:
@@ -118,9 +118,8 @@ static void ShowCurrentScreen(void)
 
 static CommandResult HandleInput(void)
 {
-	//primi zna ako je primljen posalji ga funkcjiji koja ga dalhe obraduje
-	uint8_t rxChar;
 
+	uint8_t rxChar;
 
 	if(HAL_UART_Receive(&huart2,&rxChar,1,10) == HAL_OK)
 	{
@@ -133,8 +132,6 @@ static CommandResult HandleInput(void)
 
 static CommandResult HandleRecievedCharacter(uint8_t rxChar)
 {
-	//odlucuje sta kad je enter- zovi novu koja obraduje cijelu naredbu unesenu
-	//kad je noramlan obican unos slova onda nek zove funkciju koja ce spremit to u buffer
 	if(rxChar == '\r')
 	{
 		return HandleCommand();
@@ -147,14 +144,14 @@ static CommandResult HandleRecievedCharacter(uint8_t rxChar)
 
 static CommandResult HandleCommand(void)
 {
-	//ona treba dodat novi red na terminalu
 	UART_SendString("\r\n");
-	//treba stavit onaj znak na kraj arraya
+
 	commandBuffer[commandBufferIndex] = '\0';
-	// treba pozvat execute command koja ce upravljat kako se izvrsava ta komanda unesweran
+
 	CommandResult result = ExecuteCommand();
-	//treba ovistit buffer tako da postavi index na 0 i da postavi buffer na sve nule mem - mozda cak mala zasebna funkcija
+
 	ClearCommandBuffer();
+
 	return result;
 }
 
@@ -181,7 +178,7 @@ static void ClearCommandBuffer(void)
 
 static CommandResult ExecuteCommand(void)
 {
-	//to be implemented :)
+
 	if(strcmp(commandBuffer, "help") == 0)
 	{
 		screenRefresh = 1;
@@ -220,9 +217,9 @@ static CommandResult ExecuteCommand(void)
 
 	if(strcmp(commandBuffer, "lock") == 0)
 	{
-
 		SetDoorState(0U);
 		SetAlarmState(0U);
+
 		return COMMAND_RESULT_LOCK;
 	}
 
