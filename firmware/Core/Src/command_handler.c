@@ -66,7 +66,8 @@ void CommandHandler_Init(void)
 
 	screenRefresh = 1;
 
-	SetDoorState(0U);
+//	SetDoorState(0U);
+	//SetAlarmState(0U);
 
 }
 
@@ -123,7 +124,7 @@ static CommandResult HandleInput(void)
 
 	if(HAL_UART_Receive(&huart2,&rxChar,1,10) == HAL_OK)
 	{
-		HandleRecievedCharacter(rxChar);
+		return HandleRecievedCharacter(rxChar);
 	}
 
 	return COMMAND_RESULT_NONE;
@@ -216,11 +217,14 @@ static CommandResult ExecuteCommand(void)
 
 		return COMMAND_RESULT_NONE;
 	}
-	/*
-	if(strcmp() == 0)
+
+	if(strcmp(commandBuffer, "lock") == 0)
 	{
 
-	}*/
+		SetDoorState(0U);
+		SetAlarmState(0U);
+		return COMMAND_RESULT_LOCK;
+	}
 
 	 if(currentScreen == DOOR_CONTROL_SCREEN)
 	 {

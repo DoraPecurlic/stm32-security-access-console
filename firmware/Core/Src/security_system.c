@@ -225,12 +225,12 @@ static void LockSystem(void)
         if ((currentTime - lastBlinkTime)
                 >= BLINKING_SPEED_MS)
         {
-            HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+            HAL_GPIO_TogglePin(ALARM_LED_GPIO_Port, ALARM_LED_Pin);
             lastBlinkTime = currentTime;
         }
     }
 
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(ALARM_LED_GPIO_Port, ALARM_LED_Pin, GPIO_PIN_RESET);
 
     UART_SendString("\r\n");
 
