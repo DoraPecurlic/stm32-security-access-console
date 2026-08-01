@@ -79,12 +79,6 @@ The external LED must be connected in series with a current-limiting resistor.
 
 ---
 
-## Hardware Setup
-
-
-
----
-
 ## Software
 
 - STM32CubeIDE
@@ -156,11 +150,6 @@ stm32-security-access-console/
 6. Select the board's virtual COM port.
 7. Configure the serial connection to `115200 8N1`.
 8. Follow the instructions displayed in the terminal.
-
----
-
-## Console Preview
-
 
 ---
 
