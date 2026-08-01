@@ -171,4 +171,4 @@ This project was created to practice:
 
 ## Author
 
-Developed by Dora Pečurlić.
+Developed by Dora Pečurlić
